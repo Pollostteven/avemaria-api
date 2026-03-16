@@ -1,0 +1,8 @@
+{
+  "name": "avemaria-api",
+  "version": "1.0.0",
+  "main": "api/catalog.js",
+  "dependencies": {
+    "sharp": "^0.33.3"
+  }
+}
