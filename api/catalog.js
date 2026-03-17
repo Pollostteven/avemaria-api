@@ -43,12 +43,12 @@ module.exports = async (req, res) => {
       const photoW = buf2 ? Math.floor((SIZE - gap) / 2) : SIZE;
 
       // Resize images to fill their slot (cover crop)
-      const resizeSlot = async (buf, w, h) => {
-        return sharp(buf)
-          .resize(w, h, { fit: 'cover', position: 'centre' })
-          .png()
-          .toBuffer();
-      };
+   const resizeSlot = async (buf, w, h) => {
+  return sharp(buf, { failOn: 'none' })
+    .resize(w, h, { fit: 'cover', position: 'centre' })
+    .toFormat('png')
+    .toBuffer();
+};
 
       const img1 = await resizeSlot(buf1, photoW, photoH);
       const img2 = buf2 ? await resizeSlot(buf2, photoW, photoH) : null;
