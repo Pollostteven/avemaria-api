@@ -11,56 +11,176 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'GET') {
-    const { url, frame='C9A84C', style='solido', fw='3', fr='0', pad='28', grad='0', gc='2C2C2C', gopa='55', gs='bottom', logo='1', badge='0', price='', bg='FAF7F2' } = req.query;
+    const {
+      url, url2 = '',
+      barh = '130', barcol = 'FFFFFF', sepcol = 'E8E2D9', sepw = '2',
+      brand = '1', brandname = 'ACCESORIOS AVE MARÍA', brandsz = '20', brandcol = '2C2C2C',
+      sub = '1', subtxt = 'Tienda Online Oficial', subcol = '888780',
+      pname = '1', pnameval = '', pnamecol = '2C2C2C', pnamesz = '15',
+      label = '0', labeltxt = '', lbgcol = 'C9A84C', ltxtcol = 'FFFFFF',
+      urlshow = '1', urlval = 'accesoriosavemaria.com', urlcol = 'A8A9AD',
+    } = req.query;
+
     if (!url) return res.status(400).json({ error: 'Missing url' });
 
-    const SIZE = 1080, fwN = +fw, frN = +fr, padN = +pad, gopaF = +gopa/100;
-    const fr_r = parseInt(frame.slice(0,2),16), fr_g = parseInt(frame.slice(2,4),16), fr_b = parseInt(frame.slice(4,6),16);
-    const bg_r = parseInt(bg.slice(0,2),16), bg_g = parseInt(bg.slice(2,4),16), bg_b = parseInt(bg.slice(4,6),16);
-    const gc_r = parseInt(gc.slice(0,2),16), gc_g = parseInt(gc.slice(2,4),16), gc_b = parseInt(gc.slice(4,6),16);
-    const fc = `rgb(${fr_r},${fr_g},${fr_b})`;
-    const barH = 60, prodH = SIZE - padN*2 - barH, imgArea = SIZE - padN*2;
+    const SIZE = 1080;
+    const barH = parseInt(barh);
+    const sepW = parseInt(sepw);
+    const photoH = SIZE - barH - sepW;
 
     try {
-      const imgRes = await fetch(url);
-      const imgBuf = Buffer.from(await imgRes.arrayBuffer());
-      const resized = await sharp(imgBuf).resize(imgArea, prodH, { fit:'inside', background:{r:bg_r,g:bg_g,b:bg_b,alpha:255} }).png().toBuffer();
-      const meta = await sharp(resized).metadata();
-      const rx = padN + Math.floor((imgArea - meta.width)/2);
-      const ry = padN + Math.floor((prodH - meta.height)/2);
+      // Fetch and process images
+      const fetchImg = async (imgUrl) => {
+        const r = await fetch(imgUrl);
+        const buf = Buffer.from(await r.arrayBuffer());
+        return buf;
+      };
 
-      let defs = '', svgBody = '';
-      if (grad==='1') {
-        if (gs==='bottom') defs += `<linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0.4" stop-color="rgb(${gc_r},${gc_g},${gc_b})" stop-opacity="0"/><stop offset="1" stop-color="rgb(${gc_r},${gc_g},${gc_b})" stop-opacity="${gopaF}"/></linearGradient>`;
-        else if (gs==='top') defs += `<linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(${gc_r},${gc_g},${gc_b})" stop-opacity="${gopaF}"/><stop offset="0.6" stop-color="rgb(${gc_r},${gc_g},${gc_b})" stop-opacity="0"/></linearGradient>`;
-        else defs += `<radialGradient id="g1" cx="50%" cy="50%" r="70%"><stop offset="0%" stop-color="rgb(${gc_r},${gc_g},${gc_b})" stop-opacity="0"/><stop offset="100%" stop-color="rgb(${gc_r},${gc_g},${gc_b})" stop-opacity="${gopaF}"/></radialGradient>`;
-        svgBody += `<rect width="${SIZE}" height="${SIZE}" fill="url(#g1)"/>`;
+      const buf1 = await fetchImg(url);
+      const buf2 = url2 ? await fetchImg(url2) : null;
+
+      const gap = buf2 ? 4 : 0;
+      const photoW = buf2 ? Math.floor((SIZE - gap) / 2) : SIZE;
+
+      // Resize images to fill their slot (cover crop)
+      const resizeSlot = async (buf, w, h) => {
+        return sharp(buf)
+          .resize(w, h, { fit: 'cover', position: 'centre' })
+          .png()
+          .toBuffer();
+      };
+
+      const img1 = await resizeSlot(buf1, photoW, photoH);
+      const img2 = buf2 ? await resizeSlot(buf2, photoW, photoH) : null;
+
+      // Parse colors helper
+      const hex = (h) => {
+        const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+        return { r, g, b, css: `rgb(${r},${g},${b})` };
+      };
+
+      const barC = hex(barcol);
+      const sepC = hex(sepcol);
+      const brandC = hex(brandcol);
+      const subC = hex(subcol);
+      const pnameC = hex(pnamecol);
+      const lbgC = hex(lbgcol);
+      const ltxtC = hex(ltxtcol);
+      const urlC = hex(urlcol);
+
+      const brandSz = parseInt(brandsz);
+      const pnameSz = parseInt(pnamesz);
+      const decodedBrand = decodeURIComponent(brandname);
+      const decodedSub = decodeURIComponent(subtxt);
+      const decodedPname = decodeURIComponent(pnameval);
+      const decodedLabel = decodeURIComponent(labeltxt);
+      const decodedUrl = decodeURIComponent(urlval);
+
+      // Build bar SVG
+      const barY = photoH + sepW;
+      const barCenterY = barH / 2;
+
+      let svgContent = '';
+
+      // Bar background
+      svgContent += ``;
+
+      // Separator
+      if (sepW > 0) {
+        svgContent += ``;
       }
-      if (style==='solido') svgBody += `<rect x="${fwN/2}" y="${fwN/2}" width="${SIZE-fwN}" height="${SIZE-fwN}" rx="${frN}" fill="none" stroke="${fc}" stroke-width="${fwN}"/>`;
-      else if (style==='doble') svgBody += `<rect x="${fwN/2}" y="${fwN/2}" width="${SIZE-fwN}" height="${SIZE-fwN}" rx="${frN}" fill="none" stroke="${fc}" stroke-width="${fwN}"/><rect x="${fwN+6}" y="${fwN+6}" width="${SIZE-fwN*2-12}" height="${SIZE-fwN*2-12}" rx="${Math.max(0,frN-6)}" fill="none" stroke="${fc}" stroke-width="1" opacity="0.6"/>`;
-      else if (style==='esquinas') { const cl=Math.min(80,SIZE*.08); [[fwN/2,fwN/2,cl,0,0,cl],[SIZE-fwN/2,fwN/2,-cl,0,0,cl],[SIZE-fwN/2,SIZE-fwN/2,-cl,0,0,-cl],[fwN/2,SIZE-fwN/2,cl,0,0,-cl]].forEach(([x,y,dx,dy,dx2,dy2])=>{ svgBody+=`<polyline points="${x+dx},${y} ${x},${y} ${x},${y+dy2}" fill="none" stroke="${fc}" stroke-width="${fwN}" stroke-linecap="square"/>` }); }
-      else if (style==='interno') { const ins=fwN+10; svgBody+=`<rect x="${ins}" y="${ins}" width="${SIZE-ins*2}" height="${SIZE-ins*2}" rx="${Math.max(0,frN-8)}" fill="none" stroke="${fc}" stroke-width="${fwN}"/>`; }
 
-      defs += `<linearGradient id="bar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(${bg_r},${bg_g},${bg_b})" stop-opacity="0"/><stop offset="1" stop-color="rgb(${bg_r},${bg_g},${bg_b})" stop-opacity="0.9"/></linearGradient>`;
-      svgBody += `<rect x="0" y="${SIZE-barH-10}" width="${SIZE}" height="${barH+10}" fill="url(#bar)"/>`;
-      if (logo!=='0') { svgBody+=`<text x="${fwN+22}" y="${SIZE-38}" font-family="sans-serif" font-size="22" font-weight="500" fill="${fc}">ACCESORIOS</text><text x="${fwN+22}" y="${SIZE-12}" font-family="sans-serif" font-size="22" font-weight="500" fill="white">AVE MARÍA</text>`; }
-      if (price) svgBody+=`<text x="${SIZE-fwN-22}" y="${SIZE-20}" font-family="sans-serif" font-size="26" font-weight="500" fill="${fc}" text-anchor="end">$${price}</text>`;
-      if (badge==='1') { const bw=210; svgBody+=`<rect x="${fwN+6}" y="${fwN+6}" width="${bw}" height="36" fill="${fc}"/><text x="${fwN+20}" y="${fwN+27}" font-family="sans-serif" font-size="16" font-weight="500" fill="white">NUEVA COLECCIÓN</text>`; }
-      svgBody+=`<text x="${SIZE/2}" y="${SIZE-fwN-4}" font-family="sans-serif" font-size="14" fill="white" fill-opacity="0.35" text-anchor="middle">accesoriosavemaria.com</text>`;
+      // Gap between photos
+      if (buf2) {
+        svgContent += ``;
+      }
 
-      const svg = `<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg"><defs>${defs}</defs><rect width="${SIZE}" height="${SIZE}" fill="rgb(${bg_r},${bg_g},${bg_b})"/>${svgBody}</svg>`;
-      const final = await sharp({create:{width:SIZE,height:SIZE,channels:4,background:{r:bg_r,g:bg_g,b:bg_b,alpha:255}}}).composite([{input:resized,top:ry,left:rx},{input:Buffer.from(svg),top:0,left:0}]).png().toBuffer();
-      res.setHeader('Content-Type','image/png');
-      res.setHeader('Cache-Control','public, max-age=86400');
-      return res.send(final);
-    } catch(e) { return res.status(500).json({error:e.message}); }
+      // Brand name centered in bar
+      if (brand === '1') {
+        const subOffset = sub === '1' ? -brandSz * 0.45 : brandSz * 0.35;
+        svgContent += `${decodedBrand}`;
+      }
+
+      // Sub text
+      if (sub === '1') {
+        const subSz = Math.round(brandSz * 0.62);
+        const subOffset = brand === '1' ? brandSz * 0.95 : 0;
+        svgContent += `${decodedSub}`;
+      }
+
+      // Product name — bottom left of bar
+      if (pname === '1' && decodedPname) {
+        svgContent += `${decodedPname}`;
+      }
+
+      // URL — top right of bar
+      if (urlshow === '1') {
+        const urlSz = Math.round(brandSz * 0.5);
+        svgContent += `${decodedUrl}`;
+      }
+
+      // Label badge
+      if (label === '1' && decodedLabel) {
+        const lSz = Math.round(brandSz * 0.65);
+        const lPad = 16, lH = lSz + lPad;
+        const lW = decodedLabel.length * lSz * 0.6 + lPad * 2;
+        svgContent += ``;
+        svgContent += `${decodedLabel}`;
+      }
+
+      const svg = `${svgContent}`;
+
+      // Compose final image
+      const composites = [
+        { input: img1, top: 0, left: 0 },
+      ];
+      if (img2) composites.push({ input: img2, top: 0, left: photoW + gap });
+      composites.push({ input: Buffer.from(svg), top: 0, left: 0 });
+
+      const base = await sharp({
+        create: { width: SIZE, height: SIZE, channels: 4, background: { r: barC.r, g: barC.g, b: barC.b, alpha: 255 } }
+      })
+      .composite(composites)
+      .png()
+      .toBuffer();
+
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.send(base);
+
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   if (req.method === 'POST') {
-    const { action, accessToken, catalogId, items } = req.body;
-    if (action==='verify') { const r=await fetch(`https://graph.facebook.com/v19.0/${catalogId}?fields=name,product_count&access_token=${accessToken}`); return res.json(await r.json()); }
-    if (action==='products') { const r=await fetch(`https://graph.facebook.com/v19.0/${catalogId}/products?fields=id,name,retailer_id,image_url,price&limit=50&access_token=${accessToken}`); return res.json(await r.json()); }
-    if (action==='update') { const requests=(items||[]).map(i=>({method:'UPDATE',retailer_id:i.retailer_id,data:{image_url:i.image_url}})); const r=await fetch(`https://graph.facebook.com/v19.0/${catalogId}/items_batch`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({access_token:accessToken,item_type:'PRODUCT_ITEM',requests})}); return res.json(await r.json()); }
-    return res.status(400).json({error:'Unknown action'});
+    const { action, accessToken, catalogId, items, after } = req.body;
+
+    if (action === 'verify') {
+      const r = await fetch(`https://graph.facebook.com/v19.0/${catalogId}?fields=name,product_count&access_token=${accessToken}`);
+      return res.json(await r.json());
+    }
+
+    if (action === 'products') {
+      const cursor = after ? `&after=${after}` : '';
+      const r = await fetch(`https://graph.facebook.com/v19.0/${catalogId}/products?fields=id,name,retailer_id,image_url,price&limit=50${cursor}&access_token=${accessToken}`);
+      return res.json(await r.json());
+    }
+
+    if (action === 'update') {
+      const requests = (items || []).map(item => ({
+        method: 'UPDATE',
+        retailer_id: item.retailer_id,
+        data: { image_url: item.image_url }
+      }));
+      const r = await fetch(`https://graph.facebook.com/v19.0/${catalogId}/items_batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: accessToken, item_type: 'PRODUCT_ITEM', requests })
+      });
+      return res.json(await r.json());
+    }
+
+    return res.status(400).json({ error: 'Unknown action' });
   }
 };
