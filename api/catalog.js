@@ -31,10 +31,12 @@ module.exports = async (req, res) => {
     try {
       // Fetch and process images
       const fetchImg = async (imgUrl) => {
-        const r = await fetch(imgUrl);
-        const buf = Buffer.from(await r.arrayBuffer());
-        return buf;
-      };
+  const r = await fetch(imgUrl);
+  const buf = Buffer.from(await r.arrayBuffer());
+  return sharp(buf, { failOn: 'none' })
+    .toFormat('png')
+    .toBuffer();
+};
 
       const buf1 = await fetchImg(url);
       const buf2 = url2 ? await fetchImg(url2) : null;
@@ -42,10 +44,10 @@ module.exports = async (req, res) => {
       const gap = buf2 ? 4 : 0;
       const photoW = buf2 ? Math.floor((SIZE - gap) / 2) : SIZE;
 
- const resizeSlot = async (buf, w, h) => {
-  return sharp(buf, { failOn: 'none' })
+const resizeSlot = async (buf, w, h) => {
+  return sharp(buf)
     .resize(w, h, { fit: 'cover', position: 'centre' })
-    .toFormat('png')
+    .png()
     .toBuffer();
 };
 
