@@ -42,8 +42,7 @@ module.exports = async (req, res) => {
       const gap = buf2 ? 4 : 0;
       const photoW = buf2 ? Math.floor((SIZE - gap) / 2) : SIZE;
 
-      // Resize images to fill their slot (cover crop)
-   const resizeSlot = async (buf, w, h) => {
+ const resizeSlot = async (buf, w, h) => {
   return sharp(buf, { failOn: 'none' })
     .resize(w, h, { fit: 'cover', position: 'centre' })
     .toFormat('png')
